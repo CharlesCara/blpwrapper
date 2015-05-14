@@ -31,6 +31,7 @@ public class Connection {
   private String histdata_request_name = "HistoricalDataRequest";
   private String intraday_tick_request_name = "IntradayTickRequest";
   private String intraday_bar_request_name = "IntradayBarRequest";
+  private String beqs_request_name = "BeqsRequest";
 
   private String apifields_service_name = "//blp/apiflds";
   private boolean apifields_service_open = false;
@@ -47,7 +48,8 @@ public class Connection {
   public static final int FIELD_INFO_RESULT = 4;
   public static final int INTRADAY_TICK_RESULT = 5;
   public static final int INTRADAY_BAR_RESULT = 6;
-
+  public static final int BEQS_RESULT = 7;
+  
   public static final int MB = 1048576;
 
   public static final String DATETIME_OPTION_NAMES[] = {
@@ -165,6 +167,7 @@ public class Connection {
       case FIELD_INFO_RESULT:               result = new FieldInfoResult(securities); break;
       case INTRADAY_TICK_RESULT:    result = new IntradayTickDataResult(securities, fields); break;
       case INTRADAY_BAR_RESULT:    result = new IntradayBarDataResult(securities, fields); break;
+      case BEQS_RESULT: result = new BeqsDataResult(securities, fields); break;
       default: throw new WrapperException("unknown result_type " + result_type);
     }
     if (response_cache.add(result)) {
@@ -394,6 +397,7 @@ public class Connection {
         case FIELD_INFO_RESULT:         result = (FieldInfoResult)response_cache.get(response_id); break;
         case INTRADAY_TICK_RESULT:      result = (IntradayTickDataResult)response_cache.get(response_id); break;
         case INTRADAY_BAR_RESULT:       result = (IntradayBarDataResult)response_cache.get(response_id); break;
+        case BEQS_RESULT:       result = (BeqsDataResult)response_cache.get(response_id); break;
         default: throw new WrapperException("unknown result_type " + result_type);
       }
 
@@ -583,6 +587,28 @@ public class Connection {
     }
     return(data_result);
   }
+
+/** Might have to overload this function to get it to work
+ * Have modelled it on bls but might need to use bps or bph instead.
+ * /
+ */
+ 
+  public DataResult beqs(String security, String field, String[] override_fields, String[] override_values, String[] option_names, String[] option_values) throws Exception {
+    String[] securities = new String[1];
+    securities[0] = security;
+
+    String[] fields = new String[1];
+    fields[0] = field;
+
+    int response_id = (int)sendRefDataRequest(BEQS_RESULT, refdata_request_name, securities, fields, override_fields, override_values, option_names, option_values).value();
+    processEventLoop(BEQS_RESULT);
+    DataResult data_result = (DataResult)response_cache.get(response_id);
+    if (!cache_responses) {
+      response_cache.set(response_id, null);
+    }
+    return(data_result);
+  }
+
 
   public DataResult tick(String security, String[] event_types, String start_date_time, String end_date_time) throws Exception {
     String[] option_names = new String[0];
