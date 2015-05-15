@@ -302,6 +302,9 @@ public class Connection {
         request.set(n, option_values[i]);
       }
     }
+    return(correlation_id);
+  }
+
 
   private CorrelationID sendBeqsDataRequest(int result_type, String request_name, String screenName, String screenType, String languageId, String Group, String AsOfDate) throws Exception {
     Service service = getRefDataService();
