@@ -8,3 +8,5 @@ script/upload*
 *.jar
 build
 R/bin
+.Rproj.user
+blpwrapper.Rproj

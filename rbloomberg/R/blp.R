@@ -235,6 +235,22 @@ tick <- function(conn, security, fields, start_date_time, end_date_time,
   return(process.result(result))
 }
 
+
+### @export "beqs-definition"
+beqs <- function(conn, screenName, screenType="PRIVATE", languageId="ENGLISH", Group = "", asOfDate=NULL)
+### @end
+{
+   if(is.null(AsOfDate)){
+      result <- conn$beqs(screenName, screenType, languageId, Group)
+   } else {
+      dAsOfDate = format(asOfDate, format="%Y%m%d")
+      result <- conn$beqs(screenName, screenType, languageId, Group, dAsOfDate)
+   }
+   
+   return(process.result(result))
+}
+
+
 process.result <- function(result, row.name.source = "none") {
   matrix.data <- .jevalArray(result$getData(), simplify = TRUE)
   if (is.null(matrix.data)) return(NULL)

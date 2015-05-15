@@ -165,9 +165,9 @@ public class Connection {
       case BULK_DATA_RESULT:                result = new BulkDataResult(securities, fields); break;
       case HISTORICAL_DATA_RESULT:          result = new HistoricalDataResult(securities, fields); break;
       case FIELD_INFO_RESULT:               result = new FieldInfoResult(securities); break;
-      case INTRADAY_TICK_RESULT:    result = new IntradayTickDataResult(securities, fields); break;
-      case INTRADAY_BAR_RESULT:    result = new IntradayBarDataResult(securities, fields); break;
-      case BEQS_RESULT: result = new BeqsDataResult(securities, fields); break;
+      case INTRADAY_TICK_RESULT:            result = new IntradayTickDataResult(securities, fields); break;
+      case INTRADAY_BAR_RESULT:             result = new IntradayBarDataResult(securities, fields); break;
+      case BEQS_RESULT:                     result = new BeqsDataResult(securities, fields); break;
       default: throw new WrapperException("unknown result_type " + result_type);
     }
     if (response_cache.add(result)) {
@@ -303,6 +303,30 @@ public class Connection {
       }
     }
 
+  private CorrelationID sendBeqsDataRequest(int result_type, String request_name, String screenName, String screenType, String languageId, String Group, String AsOfDate) throws Exception {
+    Service service = getRefDataService();
+    Request request = service.createRequest(request_name);
+    
+    request.Set("screenName", screenName);
+
+    request.Set("screenType", screenType);
+
+    if( !languageId.equals("") ){
+       request.Set("languageId", languageId);
+    }
+
+    if( !Group.equals("") ){
+       request.Set("Group", Group);
+    }
+
+    if ( !StringAsOfDate.equals("") ) {
+      Element override_values_element = request.getElement("overrides");
+      Element override = override_values_element.appendElement();
+      override.setElement("fieldId", "PiTDate");
+      override.setElement("value", AsOfDate);
+      logger.fine("override PiTDate set to " + AsOfDate);
+    }
+
     CorrelationID correlation_id = nextCorrelationID(result_type, securities, fields);
     if (identity == null) {
       session.sendRequest(request, correlation_id);
@@ -397,7 +421,7 @@ public class Connection {
         case FIELD_INFO_RESULT:         result = (FieldInfoResult)response_cache.get(response_id); break;
         case INTRADAY_TICK_RESULT:      result = (IntradayTickDataResult)response_cache.get(response_id); break;
         case INTRADAY_BAR_RESULT:       result = (IntradayBarDataResult)response_cache.get(response_id); break;
-        case BEQS_RESULT:       result = (BeqsDataResult)response_cache.get(response_id); break;
+        case BEQS_RESULT:               result = (BeqsDataResult)response_cache.get(response_id); break;
         default: throw new WrapperException("unknown result_type " + result_type);
       }
 
@@ -588,19 +612,41 @@ public class Connection {
     return(data_result);
   }
 
-/** Might have to overload this function to get it to work
- * Have modelled it on bls but might need to use bps or bph instead.
+/** 
+ * Might have to overload this function to get it to work
+ * Have modelled it on blp.
  * /
  */
  
-  public DataResult beqs(String security, String field, String[] override_fields, String[] override_values, String[] option_names, String[] option_values) throws Exception {
-    String[] securities = new String[1];
-    securities[0] = security;
+  public DataResult beqs(String screenName) throws Exception {
+    String screenType = "PRIVATE";
+    String languageId = "ENGLISH";
+    String Group = "";
+    String AsOfDate = "";
+    return(beqs(screenName, screenType, languageId, Group, override_fields, AsOfDate));
+  }
 
-    String[] fields = new String[1];
-    fields[0] = field;
+  public DataResult beqs(String screenName, String AsOfDate) throws Exception {
+    String screenType = "PRIVATE";
+    String languageId = "ENGLISH";
+    String Group = "";
+    return(beqs(screenName, screenType, languageId, Group, AsOfDate));
+  }
 
-    int response_id = (int)sendRefDataRequest(BEQS_RESULT, refdata_request_name, securities, fields, override_fields, override_values, option_names, option_values).value();
+  public DataResult beqs(String screenName, String Group, String AsOfDate) throws Exception {
+    String screenType = "PRIVATE";
+    String languageId = "ENGLISH";
+    return(beqs(screenName, screenType, languageId, Group, AsOfDate));
+  }
+
+  public DataResult beqs(String screenName, String screenType, String languageId, String Group) throws Exception {
+    String AsOfDate = "";
+    return(beqs(screenName, screenType, languageId, Group, AsOfDate));
+  }
+
+
+  public DataResult beqs(String screenName, String screenType, String languageId, String Group, String AsOfDate) throws Exception {
+    int response_id = (int)sendBeqsDataRequest(BEQS_RESULT, beqs_request_name, screenName, screenType, languageId, Group, AsOfDate).value();
     processEventLoop(BEQS_RESULT);
     DataResult data_result = (DataResult)response_cache.get(response_id);
     if (!cache_responses) {
@@ -608,6 +654,7 @@ public class Connection {
     }
     return(data_result);
   }
+
 
 
   public DataResult tick(String security, String[] event_types, String start_date_time, String end_date_time) throws Exception {
