@@ -302,6 +302,13 @@ public class Connection {
         request.set(n, option_values[i]);
       }
     }
+
+    CorrelationID correlation_id = nextCorrelationID(result_type, securities, fields);
+    if (identity == null) {
+      session.sendRequest(request, correlation_id);
+    } else {
+      session.sendRequest(request, identity, correlation_id);
+    }
     return(correlation_id);
   }
 
@@ -310,19 +317,19 @@ public class Connection {
     Service service = getRefDataService();
     Request request = service.createRequest(request_name);
     
-    request.Set("screenName", screenName);
+    request.set("screenName", screenName);
 
-    request.Set("screenType", screenType);
+    request.set("screenType", screenType);
 
     if( !languageId.equals("") ){
        request.Set("languageId", languageId);
     }
 
     if( !Group.equals("") ){
-       request.Set("Group", Group);
+       request.set("Group", Group);
     }
 
-    if ( !StringAsOfDate.equals("") ) {
+    if ( !AsOfDate.equals("") ) {
       Element override_values_element = request.getElement("overrides");
       Element override = override_values_element.appendElement();
       override.setElement("fieldId", "PiTDate");
@@ -626,7 +633,7 @@ public class Connection {
     String languageId = "ENGLISH";
     String Group = "";
     String AsOfDate = "";
-    return(beqs(screenName, screenType, languageId, Group, override_fields, AsOfDate));
+    return(beqs(screenName, screenType, languageId, Group, AsOfDate));
   }
 
   public DataResult beqs(String screenName, String AsOfDate) throws Exception {
