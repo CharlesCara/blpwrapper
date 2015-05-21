@@ -11,17 +11,9 @@ public class BeqsDataResult extends DataResult {
   private String[][] result_data;
 
   public BeqsDataResult(String[] argSecurities, String[] argFields) {
-    securities = argSecurities;
-    fields = argFields;
-
-    data_types = new String[fields.length];
-    // Because we may get data type info out of order, need to
-    // initialize array at start with a default value.
-    for (int i = 0; i < fields.length; i++) {
-      // Call this "NOT_APPLICABLE" since "NA" causes problems in R.
-      data_types[i] = "NOT_APPLICABLE";
-    }
-    result_data = new String[securities.length][fields.length];
+    // With BEQS we do not know the size of the result data until
+    // we process response, so we cannot pre initialise the output 
+    
   }
 
   public String[][] getData() {
@@ -43,7 +35,34 @@ public class BeqsDataResult extends DataResult {
   public void processResponse(Element response, Logger logger, boolean throwInvalidTickerError) throws WrapperException {
     Element securityDataArray = response.getElement("securityData");
     int numItems = securityDataArray.numValues();
+    if (numItems == 0 ){
+      logger.info("No securities in response");
+      securities = new String[0];
+      fields = new String[0];
+      data_types = new String[0];
+      result_data = new String[0][0];
+      return();
+    }
+      
+    securities = new String[numItems];
+    
+    // Use the number of fields in the first security to size the results_data array
+    Element secData = securityDataArray.getValueAsElement(0);
+    Element fldData = secData.getElement("fieldData");
+    int numCols = fldData.numValues();
+    fields = new String[numCols];
 
+    data_types = new String[fields.length];
+    // Because we may get data type info out of order, need to
+    // initialize array at start with a default value.
+    for (int i = 0; i < fields.length; i++) {
+      // Call this "NOT_APPLICABLE" since "NA" causes problems in R.
+      data_types[i] = "NOT_APPLICABLE";
+    }
+
+    result_data = new String[securities.length][fields.length];
+    
+    
     for (int i = 0; i < numItems; i++) {
       Element securityData = securityDataArray.getValueAsElement(i);
       Element fieldData = securityData.getElement("fieldData");
