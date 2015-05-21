@@ -240,7 +240,7 @@ tick <- function(conn, security, fields, start_date_time, end_date_time,
 beqs <- function(conn, screenName, screenType="PRIVATE", languageId="ENGLISH", Group = "", asOfDate=NULL)
 ### @end
 {
-   if(is.null(AsOfDate)){
+   if(is.null(asOfDate)){
       result <- conn$beqs(screenName, screenType, languageId, Group)
    } else {
       dAsOfDate = format(asOfDate, format="%Y%m%d")

@@ -167,7 +167,7 @@ public class Connection {
       case FIELD_INFO_RESULT:               result = new FieldInfoResult(securities); break;
       case INTRADAY_TICK_RESULT:            result = new IntradayTickDataResult(securities, fields); break;
       case INTRADAY_BAR_RESULT:             result = new IntradayBarDataResult(securities, fields); break;
-      case BEQS_RESULT:                     result = new BeqsDataResult(securities, fields); break;
+      case BEQS_RESULT:                     result = new BeqsDataResult(); break;
       default: throw new WrapperException("unknown result_type " + result_type);
     }
     if (response_cache.add(result)) {

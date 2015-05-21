@@ -10,7 +10,7 @@ public class BeqsDataResult extends DataResult {
   private String[] data_types;
   private String[][] result_data;
 
-  public BeqsDataResult(String[] argSecurities, String[] argFields) {
+  public BeqsDataResult() {
     // With BEQS we do not know the size of the result data until
     // we process response, so we cannot pre initialise the output 
     
@@ -33,8 +33,13 @@ public class BeqsDataResult extends DataResult {
   }
 
   public void processResponse(Element response, Logger logger, boolean throwInvalidTickerError) throws WrapperException {
-    Element securityDataArray = response.getElement("securityData");
+    logger.finest("BeqsDataResult: Processing response");
+    
+    Element dataElement = response.getElement("data");
+    Element securityDataArray = dataElement.getElement("securityData");
+    
     int numItems = securityDataArray.numValues();
+    logger.finest("BeqsDataResult: Number of securities is " + numItems);
     if (numItems == 0 ){
       logger.info("No securities in response");
       securities = new String[0];
@@ -47,26 +52,31 @@ public class BeqsDataResult extends DataResult {
     securities = new String[numItems];
     
     // Use the number of fields in the first security to size the results_data array
-    Element secData = securityDataArray.getValueAsElement(0);
-    Element fldData = secData.getElement("fieldData");
-    int numCols = fldData.numValues();
+    Element fldData = dataElement.getElement("fieldDisplayUnits");
+    int numCols = fldData.numElements();
     fields = new String[numCols];
 
     data_types = new String[fields.length];
     // Because we may get data type info out of order, need to
     // initialize array at start with a default value.
+    // get the names of each field/column from fieldDisplayUnits
+
     for (int i = 0; i < fields.length; i++) {
       // Call this "NOT_APPLICABLE" since "NA" causes problems in R.
       data_types[i] = "NOT_APPLICABLE";
+      fields[i] = fldData.getElement(i).name().toString();
     }
+
+    logger.finest("BeqsDataResult: Number of fields is " + fields.length);
 
     result_data = new String[securities.length][fields.length];
     
     
     for (int i = 0; i < numItems; i++) {
-      Element securityData = securityDataArray.getValueAsElement(i);
+logger.finest("***");
+Element securityData = securityDataArray.getValueAsElement(i);
       Element fieldData = securityData.getElement("fieldData");
-      int seq = securityData.getElementAsInt32("sequenceNumber");
+      String sec = securityData.getElementAsString("security");
 
       processSecurityError(securityData, logger, throwInvalidTickerError);
       processFieldExceptions(securityData, logger);
@@ -76,8 +86,9 @@ public class BeqsDataResult extends DataResult {
         String field_name = fields[j];
 
         if (field_data_counter < fieldData.numElements()) {
-          logger.finest("i = " + i + "\n" + "seq = " + seq + "\n" + "j = " + j + "\n" + "field_data_counter = " + field_data_counter);
+          logger.finest("i = " + i + "\n" + " security = " + sec + "\n" + " j = " + j + "\n" + " field_data_counter = " + field_data_counter);
           Element field = fieldData.getElement(field_data_counter);
+          
           if (field.name().toString().equals(field_name)) {
             // Raise an error if we're trying to read SEQUENCE data.
             // Store the data type for later (if it hasn't already been stored).
@@ -98,14 +109,15 @@ public class BeqsDataResult extends DataResult {
 
             logger.finest("Setting field value to " + value);
             field_data_counter++;
+           logger.finest("field_data_counter = " + field_data_counter);
 
             if (value.equals("-2.4245362661989844E-14")) {
               logger.info("Numeric of -2.4245362661989844E-14 encountered. Not a real value. Will be left NULL.");
             } else {
-              result_data[seq][j] = value;
+              result_data[i][j] = value;
             }
           } else {
-            logger.finest("Skipping field.");
+            logger.finest("Skipping field as does not match.");
           }
         }
 
