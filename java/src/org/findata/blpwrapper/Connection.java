@@ -322,7 +322,7 @@ public class Connection {
     request.set("screenType", screenType);
 
     if( !languageId.equals("") ){
-       request.Set("languageId", languageId);
+       request.set("languageId", languageId);
     }
 
     if( !Group.equals("") ){
@@ -337,9 +337,11 @@ public class Connection {
       logger.fine("override PiTDate set to " + AsOfDate);
     }
     
-    // BEQSRequest does not have the fields element (table columns) as they are defined using the BEQS
-    // function on the terminal when defining a screen.  But create a dummy one as nextCorrelationID expects it
+    // BEQSRequest does not have the securities or fields elements as they are defined using the BEQS
+    // function on the terminal when defining a screen.  But create dummy ones as nextCorrelationID expects it
      
+    
+    String[] securities = new String[0];    
     String[] fields = new String[0];
 
     CorrelationID correlation_id = nextCorrelationID(result_type, securities, fields);

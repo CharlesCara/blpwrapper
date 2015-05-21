@@ -41,7 +41,7 @@ public class BeqsDataResult extends DataResult {
       fields = new String[0];
       data_types = new String[0];
       result_data = new String[0][0];
-      return();
+      return;
     }
       
     securities = new String[numItems];
